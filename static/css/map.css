@@ -202,13 +202,24 @@ html, body {
     font-size: 14px;
 }
 
-/* === Floating action button === */
-.fab {
+/* === Floating action buttons === */
+.fab-stack {
     position: fixed;
     bottom: 24px;
     right: 24px;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 12px;
+    z-index: 20;
+}
+
+.fab {
+    display: block;
     width: 56px;
     height: 56px;
+    min-height: 56px;
+    flex-shrink: 0;
     border-radius: 50%;
     background: #2563eb;
     color: #fff;
@@ -217,12 +228,29 @@ html, body {
     text-align: center;
     text-decoration: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    z-index: 20;
     transition: background 0.2s;
 }
 
 .fab:hover {
     background: #1d4ed8;
+}
+
+.fab-admin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    line-height: normal;
+}
+
+.fab-admin:hover {
+    background: #f3f4f6;
+}
+
+.fab-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
 }
 
 /* === Mobile responsive === */

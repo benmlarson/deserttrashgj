@@ -23,6 +23,10 @@ TEMP_PHOTO_DIR = Path(settings.MEDIA_ROOT) / "tmp_uploads"
 
 def map_view(request):
     categories = Category.objects.all()
+    is_moderator = (
+        request.user.is_authenticated
+        and request.user.role in ("moderator", "admin")
+    )
     context = {
         "mapbox_token": settings.MAPBOX_TOKEN,
         "categories": categories,
@@ -33,6 +37,7 @@ def map_view(request):
             for value, label in Submission.Status.choices
             if value in ("approved", "in_progress", "cleaned")
         ],
+        "is_moderator": is_moderator,
     }
     return render(request, "reports/map.html", context)
 

@@ -77,12 +77,19 @@
 <!-- Map container -->
 <div id="map"></div>
 
-<!-- Floating report button -->
-{% if user.is_authenticated %}
-<a href="{% url 'reports:submit' %}" class="fab" title="Report Trash">+</a>
-{% else %}
-<a href="{% url 'account_login' %}?next={% url 'reports:submit' %}" class="fab" title="Log in to report trash">+</a>
-{% endif %}
+<!-- Floating action buttons -->
+<div class="fab-stack">
+    {% if is_moderator %}
+    <a href="{% url 'reports:moderate_list' %}" class="fab fab-admin" title="Moderate">
+        <img src="{% static 'img/logo-96.png' %}" alt="Admin" class="fab-icon">
+    </a>
+    {% endif %}
+    {% if user.is_authenticated %}
+    <a href="{% url 'reports:submit' %}" class="fab" title="Report Trash">+</a>
+    {% else %}
+    <a href="{% url 'account_login' %}?next={% url 'reports:submit' %}" class="fab" title="Log in to report trash">+</a>
+    {% endif %}
+</div>
 
 <!-- Bridge Django settings to JS -->
 <script>

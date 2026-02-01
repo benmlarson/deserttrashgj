@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desert Trash GJ</title>
+    <!-- Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <!-- App styles -->
+    <link rel="stylesheet" href="{% static 'css/map.css' %}">
+</head>
+<body>
+
+<!-- Filter sidebar -->
+<div id="sidebar">
+    <h2>Filter Reports</h2>
+
+    <!-- Categories -->
+    <div class="filter-group">
+        <label>Category</label>
+        {% for cat in categories %}
+        <div class="category-item">
+            <input type="checkbox" class="category-checkbox" value="{{ cat.slug }}" checked>
+            <span class="category-swatch" style="background: {{ cat.color }}"></span>
+            {{ cat.name }}
+        </div>
+        {% empty %}
+        <div style="color: #999; font-size: 13px;">No categories yet</div>
+        {% endfor %}
+    </div>
+
+    <!-- Severity -->
+    <div class="filter-group">
+        <label for="filter-severity">Severity</label>
+        <select id="filter-severity">
+            <option value="">All</option>
+            {% for value, display in severity_choices %}
+            <option value="{{ value }}">{{ display }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Status -->
+    <div class="filter-group">
+        <label for="filter-status">Status</label>
+        <select id="filter-status">
+            <option value="">All</option>
+            {% for value, display in status_choices %}
+            <option value="{{ value }}">{{ display }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Date range -->
+    <div class="filter-group">
+        <label for="filter-date-from">Date From</label>
+        <input type="date" id="filter-date-from">
+    </div>
+    <div class="filter-group">
+        <label for="filter-date-to">Date To</label>
+        <input type="date" id="filter-date-to">
+    </div>
+
+    <!-- Apply / Reset buttons -->
+    <div class="filter-buttons">
+        <button id="filter-apply" class="btn btn-apply">Apply</button>
+        <button id="filter-reset" class="btn btn-reset">Reset</button>
+    </div>
+</div>
+
+<!-- Mobile sidebar toggle -->
+<button id="sidebar-toggle" aria-label="Toggle filters">&#9776;</button>
+
+<!-- Map container -->
+<div id="map"></div>
+
+<!-- Bridge Django settings to JS -->
+<script>
+    window.MAPBOX_TOKEN = "{{ mapbox_token }}";
+    window.GEOJSON_URL = "{% url 'reports:submissions_geojson' %}";
+</script>
+<script src="{% static 'js/map.js' %}"></script>
+
+</body>
+</html>

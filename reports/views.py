@@ -7,9 +7,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.http import HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
+from .decorators import moderator_required
 from .forms import SubmissionForm
 from .models import Category, Submission
 from .utils import cleanup_temp_uploads, extract_gps_from_exif, resize_photo
@@ -204,3 +207,47 @@ def submissions_geojson(request):
     return JsonResponse(
         {"type": "FeatureCollection", "features": features}
     )
+
+
+@moderator_required
+def moderate_list(request):
+    submissions = (
+        Submission.objects.filter(status="pending")
+        .select_related("category", "user")
+        .order_by("created_at")
+    )
+    return render(
+        request,
+        "reports/moderate_list.html",
+        {"submissions": submissions, "pending_count": submissions.count()},
+    )
+
+
+@moderator_required
+def moderate_detail(request, pk):
+    submission = get_object_or_404(
+        Submission.objects.select_related("category", "user"), pk=pk
+    )
+    return render(
+        request,
+        "reports/moderate_detail.html",
+        {"submission": submission, "mapbox_token": settings.MAPBOX_TOKEN},
+    )
+
+
+@moderator_required
+@require_POST
+def moderate_action(request, pk):
+    submission = get_object_or_404(Submission, pk=pk, status="pending")
+    action = request.POST.get("action")
+    if action not in ("approve", "reject"):
+        return HttpResponseBadRequest("Invalid action.")
+
+    submission.status = "approved" if action == "approve" else "rejected"
+    submission.moderated_by = request.user
+    submission.moderated_at = timezone.now()
+    submission.save()
+
+    label = "approved" if action == "approve" else "rejected"
+    messages.success(request, f"Submission #{submission.pk} has been {label}.")
+    return redirect("reports:moderate_list")

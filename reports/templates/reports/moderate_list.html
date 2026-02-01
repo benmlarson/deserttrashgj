@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Queue - Desert Trash GJ</title>
+    <link rel="stylesheet" href="{% static 'css/moderate.css' %}">
+</head>
+<body>
+
+<div class="mod-header">
+    <h1>Moderation Queue <span class="badge">{{ pending_count }}</span></h1>
+    <a href="{% url 'reports:map' %}">&larr; Back to Map</a>
+</div>
+
+<div class="mod-container">
+
+    {% if messages %}
+    <div class="mod-messages">
+        {% for message in messages %}
+        <div class="msg {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if submissions %}
+
+    <!-- Desktop table -->
+    <div class="mod-table-wrap">
+        <table class="mod-table">
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Submitter</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr>
+                    <td><img class="thumb" src="{{ sub.photo.url }}" alt="Submission photo"></td>
+                    <td>
+                        <div class="category-cell">
+                            <span class="category-swatch" style="background: {{ sub.category.color }}"></span>
+                            {{ sub.category.name }}
+                        </div>
+                    </td>
+                    <td><span class="severity-badge {{ sub.severity }}">{{ sub.get_severity_display }}</span></td>
+                    <td>{{ sub.user }}</td>
+                    <td>{{ sub.created_at|date:"M d, Y" }}</td>
+                    <td><a class="review-link" href="{% url 'reports:moderate_detail' sub.pk %}">Review</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="mod-cards">
+        {% for sub in submissions %}
+        <a href="{% url 'reports:moderate_detail' sub.pk %}" class="mod-card" style="text-decoration:none; color:inherit;">
+            <img class="thumb" src="{{ sub.photo.url }}" alt="Submission photo">
+            <div class="mod-card-body">
+                <div class="card-category">
+                    <span class="category-swatch" style="background: {{ sub.category.color }}; display:inline-block; width:10px; height:10px; border-radius:50%;"></span>
+                    {{ sub.category.name }}
+                </div>
+                <div class="card-meta">
+                    <span class="severity-badge {{ sub.severity }}">{{ sub.get_severity_display }}</span>
+                    &middot; {{ sub.created_at|date:"M d, Y" }}
+                </div>
+                <div class="card-meta">{{ sub.user }}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="mod-empty">
+        No pending submissions to review. The queue is clear!
+    </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

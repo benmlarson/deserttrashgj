@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Submission #{{ submission.pk }} - Desert Trash GJ</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="{% static 'css/moderate.css' %}">
+</head>
+<body>
+
+<div class="mod-header">
+    <h1>Review Submission #{{ submission.pk }}</h1>
+    <a href="{% url 'reports:map' %}">&larr; Map</a>
+</div>
+
+<div class="mod-container">
+
+    <a class="mod-back" href="{% url 'reports:moderate_list' %}">&larr; Back to Queue</a>
+
+    <div class="mod-detail-grid">
+        <div class="mod-photo">
+            <img src="{{ submission.photo.url }}" alt="Submission photo">
+        </div>
+
+        <div class="mod-meta">
+            <h2>Submission Details</h2>
+
+            <dl>
+                <dt>Category</dt>
+                <dd>
+                    <span class="category-swatch" style="background: {{ submission.category.color }}; display:inline-block; width:12px; height:12px; border-radius:50%;"></span>
+                    {{ submission.category.name }}
+                </dd>
+
+                <dt>Severity</dt>
+                <dd><span class="severity-badge {{ submission.severity }}">{{ submission.get_severity_display }}</span></dd>
+
+                <dt>Status</dt>
+                <dd><span class="status-badge {{ submission.status }}">{{ submission.get_status_display }}</span></dd>
+
+                <dt>Submitter</dt>
+                <dd>{{ submission.user }}</dd>
+
+                <dt>Date Submitted</dt>
+                <dd>{{ submission.created_at|date:"M d, Y H:i" }}</dd>
+
+                {% if submission.description %}
+                <dt>Description</dt>
+                <dd>{{ submission.description }}</dd>
+                {% endif %}
+            </dl>
+
+            <div id="detail-map" class="mod-map"></div>
+
+            {% if submission.status == "pending" %}
+            <div class="mod-actions">
+                <form method="post" action="{% url 'reports:moderate_action' submission.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn-approve">Approve</button>
+                </form>
+                <form method="post" action="{% url 'reports:moderate_action' submission.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn-reject">Reject</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+    window.SUBMISSION_LAT = {{ submission.latitude }};
+    window.SUBMISSION_LNG = {{ submission.longitude }};
+    window.MAPBOX_TOKEN = "{{ mapbox_token }}";
+</script>
+<script src="{% static 'js/moderate.js' %}"></script>
+
+</body>
+</html>

@@ -76,6 +76,13 @@
 <!-- Map container -->
 <div id="map"></div>
 
+<!-- Floating report button -->
+{% if user.is_authenticated %}
+<a href="{% url 'reports:submit' %}" class="fab" title="Report Trash">+</a>
+{% else %}
+<a href="{% url 'account_login' %}?next={% url 'reports:submit' %}" class="fab" title="Log in to report trash">+</a>
+{% endif %}
+
 <!-- Bridge Django settings to JS -->
 <script>
     window.MAPBOX_TOKEN = "{{ mapbox_token }}";

@@ -1,8 +1,15 @@
-from django.conf import settings
-from django.http import JsonResponse
-from django.shortcuts import render
+from decimal import Decimal
 
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.gis.geos import Point
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+
+from .forms import SubmissionForm
 from .models import Category, Submission
+from .utils import extract_gps_from_exif, resize_photo
 
 
 def map_view(request):
@@ -19,6 +26,58 @@ def map_view(request):
         ],
     }
     return render(request, "reports/map.html", context)
+
+
+@login_required
+def submit_view(request):
+    if request.method == "POST":
+        form = SubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            photo = form.cleaned_data["photo"]
+
+            # Extract EXIF GPS before resize strips it
+            gps_coords, exif_data = extract_gps_from_exif(photo)
+
+            # User pin takes priority over EXIF
+            lat = form.cleaned_data.get("latitude")
+            lng = form.cleaned_data.get("longitude")
+
+            if lat is None or lng is None:
+                if gps_coords:
+                    lat, lng = gps_coords
+                else:
+                    form.add_error(
+                        None,
+                        "No location found. Please place a pin on the map or "
+                        "upload a photo with GPS data.",
+                    )
+                    return render(request, "reports/submit.html", {
+                        "form": form,
+                        "mapbox_token": settings.MAPBOX_TOKEN,
+                    })
+
+            # Resize photo
+            resized = resize_photo(photo)
+
+            submission = form.save(commit=False)
+            submission.user = request.user
+            submission.status = Submission.Status.PENDING
+            submission.latitude = Decimal(str(round(lat, 6)))
+            submission.longitude = Decimal(str(round(lng, 6)))
+            submission.location = Point(float(lng), float(lat), srid=4326)
+            submission.exif_data = exif_data
+            submission.photo = resized
+            submission.save()
+
+            messages.success(request, "Report submitted! It will appear on the map after review.")
+            return redirect("reports:map")
+    else:
+        form = SubmissionForm()
+
+    return render(request, "reports/submit.html", {
+        "form": form,
+        "mapbox_token": settings.MAPBOX_TOKEN,
+    })
 
 
 def submissions_geojson(request):

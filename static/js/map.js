@@ -192,7 +192,11 @@
             var props = feature.properties;
 
             // Build popup HTML
-            var html = '<div class="popup-title">' + escapeHtml(props.category_name) + '</div>';
+            var html = '';
+            if (props.photo_url) {
+                html += '<img class="popup-thumb" src="' + escapeHtml(props.photo_url) + '" alt="">';
+            }
+            html += '<div class="popup-title"><a href="' + escapeHtml(props.detail_url) + '">' + escapeHtml(props.category_name) + '</a></div>';
             html += '<div class="popup-category">';
             html += '<span class="category-swatch" style="background:' + escapeHtml(props.color) + '"></span>';
             html += '<span class="popup-severity ' + escapeHtml(props.severity) + '">' + escapeHtml(props.severity) + '</span>';

@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ submission.category.name }} - Desert Trash GJ</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="{% static 'css/submission_detail.css' %}">
+</head>
+<body>
+
+<div class="detail-header">
+    <h1>{{ submission.category.name }}</h1>
+    <a href="{% url 'reports:map' %}">&larr; Back to Map</a>
+</div>
+
+<div class="detail-container">
+
+    <div class="detail-grid">
+        <div class="detail-photo">
+            <img src="{{ submission.photo.url }}" alt="Submission photo">
+        </div>
+
+        <div class="detail-meta">
+            <h2>Submission Details</h2>
+
+            <dl>
+                <dt>Category</dt>
+                <dd>
+                    <span class="category-swatch" style="background: {{ submission.category.color }}; display:inline-block; width:12px; height:12px; border-radius:50%;"></span>
+                    {{ submission.category.name }}
+                </dd>
+
+                <dt>Severity</dt>
+                <dd><span class="severity-badge {{ submission.severity }}">{{ submission.get_severity_display }}</span></dd>
+
+                <dt>Status</dt>
+                <dd><span class="status-badge {{ submission.status }}">{{ submission.get_status_display }}</span></dd>
+
+                <dt>Date Submitted</dt>
+                <dd>{{ submission.created_at|date:"M d, Y" }}</dd>
+
+                {% if submission.description %}
+                <dt>Description</dt>
+                <dd>{{ submission.description }}</dd>
+                {% endif %}
+            </dl>
+
+            <div id="detail-map" class="detail-map"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    window.SUBMISSION_LAT = {{ submission.latitude }};
+    window.SUBMISSION_LNG = {{ submission.longitude }};
+    window.MAPBOX_TOKEN = "{{ mapbox_token }}";
+</script>
+<script src="{% static 'js/moderate.js' %}"></script>
+
+</body>
+</html>

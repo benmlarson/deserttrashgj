@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .decorators import moderator_required
@@ -200,6 +201,8 @@ def submissions_geojson(request):
                     "status_display": sub.get_status_display(),
                     "description": sub.description[:200] if sub.description else "",
                     "created_at": sub.created_at.strftime("%b %d, %Y"),
+                    "photo_url": sub.photo.url if sub.photo else "",
+                    "detail_url": reverse("reports:submission_detail", args=[sub.pk]),
                 },
             }
         )
@@ -251,3 +254,16 @@ def moderate_action(request, pk):
     label = "approved" if action == "approve" else "rejected"
     messages.success(request, f"Submission #{submission.pk} has been {label}.")
     return redirect("reports:moderate_list")
+
+
+def submission_detail(request, pk):
+    submission = get_object_or_404(
+        Submission.objects.select_related("category", "user"),
+        pk=pk,
+        status__in=["approved", "in_progress", "cleaned"],
+    )
+    return render(
+        request,
+        "reports/submission_detail.html",
+        {"submission": submission, "mapbox_token": settings.MAPBOX_TOKEN},
+    )

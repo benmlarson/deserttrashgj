@@ -11,4 +11,5 @@ urlpatterns = [
     path("moderate/", views.moderate_list, name="moderate_list"),
     path("moderate/<int:pk>/", views.moderate_detail, name="moderate_detail"),
     path("moderate/<int:pk>/action/", views.moderate_action, name="moderate_action"),
+    path("submission/<int:pk>/", views.submission_detail, name="submission_detail"),
 ]

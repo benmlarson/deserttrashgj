@@ -1,0 +1,104 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Trash - Desert Trash GJ</title>
+    <!-- Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <!-- App styles -->
+    <link rel="stylesheet" href="{% static 'css/submit.css' %}">
+</head>
+<body>
+
+<header class="submit-header">
+    <a href="{% url 'reports:map' %}" class="back-link">&larr; Back to Map</a>
+    <h1>Report Trash</h1>
+</header>
+
+<main class="submit-container">
+    {% if form.non_field_errors %}
+    <div class="form-errors">
+        {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% for message in messages %}
+    <div class="form-message {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+
+    <form method="post" enctype="multipart/form-data" id="submit-form">
+        {% csrf_token %}
+
+        <!-- Photo -->
+        <div class="form-group">
+            <label for="{{ form.photo.id_for_label }}">Photo</label>
+            {{ form.photo }}
+            {% if form.photo.errors %}
+            <div class="field-error">{{ form.photo.errors.0 }}</div>
+            {% endif %}
+            {% if temp_photo %}
+            <input type="hidden" name="temp_photo" value="{{ temp_photo }}">
+            <div id="photo-preview-area">
+                <img src="/media/tmp_uploads/{{ temp_photo }}" alt="Uploaded photo">
+                <p class="photo-kept-msg">Photo attached. You may select a new one or keep this.</p>
+            </div>
+            {% else %}
+            <div id="photo-preview-area"></div>
+            {% endif %}
+            <div id="exif-status"></div>
+        </div>
+
+        <!-- Map for pin placement -->
+        <div class="form-group">
+            <label>Location <span class="hint">Tap the map to place a pin</span></label>
+            <div id="pin-map"></div>
+            <div id="coords-display"></div>
+        </div>
+
+        <!-- Hidden lat/lng -->
+        {{ form.latitude }}
+        {{ form.longitude }}
+
+        <!-- Category -->
+        <div class="form-group">
+            <label for="{{ form.category.id_for_label }}">Category</label>
+            {{ form.category }}
+            {% if form.category.errors %}
+            <div class="field-error">{{ form.category.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Severity -->
+        <div class="form-group">
+            <label for="{{ form.severity.id_for_label }}">Severity</label>
+            {{ form.severity }}
+            {% if form.severity.errors %}
+            <div class="field-error">{{ form.severity.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">Description <span class="hint">(optional)</span></label>
+            {{ form.description }}
+            {% if form.description.errors %}
+            <div class="field-error">{{ form.description.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn-submit" id="submit-btn">Submit Report</button>
+    </form>
+</main>
+
+<script>
+    window.MAPBOX_TOKEN = "{{ mapbox_token }}";
+</script>
+<script src="{% static 'js/submit.js' %}"></script>
+
+</body>
+</html>

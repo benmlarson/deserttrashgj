@@ -1,15 +1,20 @@
+import uuid
 from decimal import Decimal
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Point
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
 from .forms import SubmissionForm
 from .models import Category, Submission
-from .utils import extract_gps_from_exif, resize_photo
+from .utils import cleanup_temp_uploads, extract_gps_from_exif, resize_photo
+
+TEMP_PHOTO_DIR = Path(settings.MEDIA_ROOT) / "tmp_uploads"
 
 
 def map_view(request):
@@ -28,12 +33,68 @@ def map_view(request):
     return render(request, "reports/map.html", context)
 
 
+def _save_temp_photo(uploaded_file):
+    """Save an uploaded photo to a temp file and return the filename."""
+    TEMP_PHOTO_DIR.mkdir(parents=True, exist_ok=True)
+    ext = Path(uploaded_file.name).suffix or ".jpg"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    path = TEMP_PHOTO_DIR / filename
+    with open(path, "wb") as f:
+        for chunk in uploaded_file.chunks():
+            f.write(chunk)
+    return filename
+
+
+def _load_temp_photo(filename):
+    """Load a temp photo file and return it as an InMemoryUploadedFile, or None."""
+    # Sanitize: only allow a hex UUID + extension, no path traversal
+    safe = Path(filename).name
+    path = TEMP_PHOTO_DIR / safe
+    if not path.is_file():
+        return None
+    from io import BytesIO
+
+    data = path.read_bytes()
+    buf = BytesIO(data)
+    ext = path.suffix.lower()
+    content_type = {
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".png": "image/png", ".webp": "image/webp",
+    }.get(ext, "image/jpeg")
+    return InMemoryUploadedFile(
+        file=buf, field_name="photo", name=safe,
+        content_type=content_type, size=len(data), charset=None,
+    )
+
+
+def _delete_temp_photo(filename):
+    """Remove a temp photo file if it exists."""
+    if not filename:
+        return
+    safe = Path(filename).name
+    path = TEMP_PHOTO_DIR / safe
+    path.unlink(missing_ok=True)
+
+
 @login_required
 def submit_view(request):
+    cleanup_temp_uploads()
+
     if request.method == "POST":
         form = SubmissionForm(request.POST, request.FILES)
         if form.is_valid():
-            photo = form.cleaned_data["photo"]
+            # Use newly uploaded photo, or fall back to temp photo from prior submit
+            photo = form.cleaned_data.get("photo")
+            temp_photo_name = form.cleaned_data.get("temp_photo")
+
+            if not photo and temp_photo_name:
+                photo = _load_temp_photo(temp_photo_name)
+                if not photo:
+                    form.add_error("photo", "Previous photo expired. Please select a photo again.")
+                    return render(request, "reports/submit.html", {
+                        "form": form,
+                        "mapbox_token": settings.MAPBOX_TOKEN,
+                    })
 
             # Extract EXIF GPS before resize strips it
             gps_coords, exif_data = extract_gps_from_exif(photo)
@@ -46,6 +107,9 @@ def submit_view(request):
                 if gps_coords:
                     lat, lng = gps_coords
                 else:
+                    # Save the photo so the user doesn't have to reselect it
+                    if not temp_photo_name:
+                        temp_photo_name = _save_temp_photo(photo)
                     form.add_error(
                         None,
                         "No location found. Please place a pin on the map or "
@@ -54,6 +118,7 @@ def submit_view(request):
                     return render(request, "reports/submit.html", {
                         "form": form,
                         "mapbox_token": settings.MAPBOX_TOKEN,
+                        "temp_photo": temp_photo_name,
                     })
 
             # Resize photo
@@ -68,6 +133,9 @@ def submit_view(request):
             submission.exif_data = exif_data
             submission.photo = resized
             submission.save()
+
+            # Clean up temp file if one was used
+            _delete_temp_photo(temp_photo_name)
 
             messages.success(request, "Report submitted! It will appear on the map after review.")
             return redirect("reports:map")

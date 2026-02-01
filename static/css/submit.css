@@ -119,6 +119,12 @@ html, body {
     object-fit: cover;
 }
 
+.photo-kept-msg {
+    font-size: 13px;
+    color: #065f46;
+    margin: 4px 0 0;
+}
+
 #exif-status {
     font-size: 13px;
     color: #065f46;

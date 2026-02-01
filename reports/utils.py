@@ -1,7 +1,23 @@
+import time
 from io import BytesIO
+from pathlib import Path
 
+from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image, ImageOps
+
+TEMP_PHOTO_DIR = Path(settings.MEDIA_ROOT) / "tmp_uploads"
+TEMP_MAX_AGE = 30 * 60  # 30 minutes in seconds
+
+
+def cleanup_temp_uploads():
+    """Delete files in tmp_uploads older than 30 minutes."""
+    if not TEMP_PHOTO_DIR.is_dir():
+        return
+    cutoff = time.time() - TEMP_MAX_AGE
+    for path in TEMP_PHOTO_DIR.iterdir():
+        if path.is_file() and path.stat().st_mtime < cutoff:
+            path.unlink(missing_ok=True)
 
 
 def extract_gps_from_exif(image_file):

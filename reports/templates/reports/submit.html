@@ -41,7 +41,15 @@
             {% if form.photo.errors %}
             <div class="field-error">{{ form.photo.errors.0 }}</div>
             {% endif %}
+            {% if temp_photo %}
+            <input type="hidden" name="temp_photo" value="{{ temp_photo }}">
+            <div id="photo-preview-area">
+                <img src="/media/tmp_uploads/{{ temp_photo }}" alt="Uploaded photo">
+                <p class="photo-kept-msg">Photo attached. You may select a new one or keep this.</p>
+            </div>
+            {% else %}
             <div id="photo-preview-area"></div>
+            {% endif %}
             <div id="exif-status"></div>
         </div>
 

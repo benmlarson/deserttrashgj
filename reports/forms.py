@@ -9,6 +9,7 @@ MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 MB
 class SubmissionForm(forms.ModelForm):
     latitude = forms.FloatField(widget=forms.HiddenInput, required=False)
     longitude = forms.FloatField(widget=forms.HiddenInput, required=False)
+    temp_photo = forms.CharField(widget=forms.HiddenInput, required=False)
 
     class Meta:
         model = Submission
@@ -19,6 +20,19 @@ class SubmissionForm(forms.ModelForm):
             ),
             "description": forms.Textarea(attrs={"rows": 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Photo is not required when a temp photo is being reused
+        self.fields["photo"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        photo = cleaned_data.get("photo")
+        temp_photo = cleaned_data.get("temp_photo")
+        if not photo and not temp_photo:
+            self.add_error("photo", "Please select a photo.")
+        return cleaned_data
 
     def clean_photo(self):
         photo = self.cleaned_data.get("photo")

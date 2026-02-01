@@ -218,18 +218,23 @@
     /* ------------------------------------------------------------------ */
 
     var form = document.getElementById("submit-form");
+    var hasTempPhoto = !!document.querySelector('input[name="temp_photo"]');
+
     if (form) {
         form.addEventListener("submit", function (e) {
-            if (!photoInput.files || !photoInput.files.length) {
+            var hasNewFile = photoInput.files && photoInput.files.length > 0;
+            if (!hasNewFile && !hasTempPhoto) {
                 e.preventDefault();
                 alert("Please select a photo.");
                 return;
             }
-            var file = photoInput.files[0];
-            if (file.size > 20 * 1024 * 1024) {
-                e.preventDefault();
-                alert("Photo must be under 20 MB.");
-                return;
+            if (hasNewFile) {
+                var file = photoInput.files[0];
+                if (file.size > 20 * 1024 * 1024) {
+                    e.preventDefault();
+                    alert("Photo must be under 20 MB.");
+                    return;
+                }
             }
             // Disable button to prevent double-submit
             submitBtn.disabled = true;

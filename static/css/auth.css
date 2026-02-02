@@ -1,4 +1,4 @@
-/* === Login page === */
+/* === Auth pages (login, logout) === */
 html, body {
     margin: 0;
     padding: 0;
@@ -69,6 +69,30 @@ body {
 
 .google-icon {
     flex-shrink: 0;
+}
+
+.logout-btn {
+    display: inline-block;
+    width: 100%;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-sizing: border-box;
+}
+
+.logout-btn:hover {
+    background: #b91c1c;
+}
+
+.logout-btn:active {
+    background: #991b1b;
 }
 
 @media (max-width: 480px) {

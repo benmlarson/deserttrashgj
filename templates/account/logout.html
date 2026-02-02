@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Out — Desert Trash GJ</title>
+    {% include "includes/favicons.html" %}
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body>
+    <div class="login-card">
+        <img src="{% static 'img/logo.png' %}" alt="Desert Trash GJ" class="login-logo">
+        <p class="login-tagline">Are you sure you want to sign out?</p>
+        <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">Sign Out</button>
+        </form>
+    </div>
+</body>
+</html>

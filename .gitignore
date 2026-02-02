@@ -16,5 +16,8 @@ media/
 .vscode/
 .idea/
 
+# Local credentials
+.local-credentials.json
+
 # OS
 .DS_Store
